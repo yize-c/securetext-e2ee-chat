@@ -26,3 +26,39 @@ jobs:
           python-version: "3.12"
       - run: pip install bandit
       - run: bandit -r securetext.py
+
+  dependency-scan:
+    name: Dependency scan (Dependency Security Analyzer)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check out my dependency scanner
+        uses: actions/checkout@v4
+        with:
+          repository: yize-c/dependency-security-analyzer
+          path: analyzer
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install requests packaging
+      - name: Scan SecureText's dependencies
+        run: |
+          cd analyzer
+          python main.py --file ../requirements.txt --output json > ../dependency-report.json
+      - name: Fail the build on high-risk packages
+        run: |
+          python - <<'PY'
+          import json, sys
+          report = json.load(open("dependency-report.json"))
+          for p in report:
+              print(f"{p['name']}=={p['current_version']}  risk={p['score']}  vulns={len(p.get('cves', []))}")
+          risky = [p["name"] for p in report if p.get("score", 0) >= 70]
+          if risky:
+              sys.exit(f"High-risk dependencies found: {risky}")
+          print("No high-risk dependencies.")
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dependency-report
+          path: dependency-report.json
