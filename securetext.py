@@ -1011,11 +1011,13 @@ class SecureTextClient:
 
 
 def main():
+    port = int(os.environ.get("SECURETEXT_PORT", "12345"))
     if len(sys.argv) > 1 and sys.argv[1] == 'server':
-        server = SecureTextServer()
+        # Bind to 0.0.0.0 only when running inside a container (see docker-compose.yml)
+        server = SecureTextServer(host=os.environ.get("SECURETEXT_BIND", "localhost"), port=port)
         server.start_server()
     else:
-        client = SecureTextClient()
+        client = SecureTextClient(host=os.environ.get("SECURETEXT_SERVER", "localhost"), port=port)
         client.run()
 
 

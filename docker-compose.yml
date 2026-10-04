@@ -1,0 +1,18 @@
+services:
+  server:
+    build: .
+    command: ["server"]
+    environment:
+      SECURETEXT_BIND: 0.0.0.0
+      SECURETEXT_CHALLENGE_KEY: ${SECURETEXT_CHALLENGE_KEY:?Set SECURETEXT_CHALLENGE_KEY in .env}
+
+  client:
+    build: .
+    depends_on:
+      - server
+    environment:
+      SECURETEXT_SERVER: server
+      SECURETEXT_CHALLENGE_KEY: ${SECURETEXT_CHALLENGE_KEY:?Set SECURETEXT_CHALLENGE_KEY in .env}
+    stdin_open: true
+    tty: true
+    profiles: ["client"]

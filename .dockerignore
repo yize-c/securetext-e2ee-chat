@@ -1,0 +1,9 @@
+.git
+.github
+tests
+__pycache__
+.pytest_cache
+.env
+users.json
+auth.log
+messages.log
