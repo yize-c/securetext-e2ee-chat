@@ -275,7 +275,8 @@ class SecureTextServer:
                 "redirect_uri": redirect_uri,
                 "state": state
             },
-            headers={"Accept": "application/json"}
+            headers={"Accept": "application/json"},
+            timeout=10
         )
 
         access_token = token_resp.json().get("access_token")
@@ -288,7 +289,8 @@ class SecureTextServer:
             headers={
                 "Authorization": f"Bearer {access_token}",
                 "Accept": "application/json"
-            }
+            },
+            timeout=10
         )
 
         user_data = user_resp.json()
@@ -567,8 +569,8 @@ class SecureTextServer:
                         elif remaining <= WARNING_THRESHOLD and username not in self.warned_users:
                             send_json(conn, {'type': 'SESSION_WARNING', 'remaining_seconds': int(remaining)})
                             self.warned_users.add(username)
-                    except Exception:
-                        continue
+                    except OSError:
+                        continue  # client already disconnected; skip it
 
     def start_server(self):
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
