@@ -1,0 +1,7 @@
+users.json
+auth.log
+.env
+__pycache__/
+*.pyc
+venv/
+.venv/
