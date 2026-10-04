@@ -1,5 +1,7 @@
 # SecureText: End-to-End Encrypted Command-Line Chat
 
+[![CI](https://github.com/yize-c/securetext-e2ee-chat/actions/workflows/ci.yml/badge.svg)](https://github.com/yize-c/securetext-e2ee-chat/actions/workflows/ci.yml)
+
 SecureText is a client–server chat that runs in the terminal over TCP sockets.
 I took an intentionally insecure starter version and hardened it step by step:
 first password storage and login, then multi-factor authentication and access
@@ -45,7 +47,7 @@ Alice (client)                 Server                  Bob (client)
 
 ## Getting Started
 
-Requires Python 3.9 or later.
+Requires Python 3.9 or later (or Docker, see below).
 
 ```bash
 pip install -r requirements.txt
@@ -81,9 +83,43 @@ export GITHUB_CLIENT_SECRET=your_client_secret
 Secrets are only read from environment variables and are never stored in the code.
 The local user database (`users.json`) and `auth.log` are excluded by `.gitignore`.
 
+### Run with Docker Compose
+
+```bash
+cp .env.example .env          # then put a random value in SECURETEXT_CHALLENGE_KEY
+docker compose up -d server   # start the server
+docker compose run --rm client   # run this in two terminals for two users
+```
+
+The container runs as a non-root user. GitHub login opens a browser, so use it when running locally rather than in Docker.
+
+## Testing and CI
+
+Every push runs three GitHub Actions jobs:
+
+| Job | Tool | What it checks |
+|---|---|---|
+| Tests | **pytest** | 22 unit and integration tests |
+| Static analysis | **Bandit** | Insecure Python patterns (SAST) |
+| Dependency scan | [Dependency Security Analyzer](https://github.com/yize-c/dependency-security-analyzer) | Known CVEs in `requirements.txt`; the build fails on any high-risk package |
+
+The tests cover:
+- ECDH: both clients derive the same 256-bit key, and different pairs get different keys
+- AES-GCM: round trips, a fresh nonce per message, and rejection of tampered ciphertext
+- Authentication: salted hashes, wrong password or TOTP, and single-use challenge responses
+- Integration: two real clients talk through a running server, and the plaintext never shows up in the server's output or logs
+
+Run them locally:
+
+```bash
+pip install pytest bandit
+pytest -v
+bandit -r securetext.py
+```
+
 ## Tech Stack
 
-Python, `socket`, `threading`, `cryptography` (ECDH, HKDF, AES-GCM), `pyotp`, `qrcode`, `requests`
+Python, `socket`, `threading`, `cryptography` (ECDH, HKDF, AES-GCM), `pyotp`, `qrcode`, `requests`, pytest, Bandit, GitHub Actions, Docker
 
 ## Credits
 
