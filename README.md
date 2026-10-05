@@ -37,12 +37,23 @@ messages but never read them.
 
 ## How It Works
 
-```
-Alice (client)                 Server                  Bob (client)
-   | -- ECDH public key -----> | -- relay public key --> |
-   | <-- relay public key ---- | <-- ECDH public key --- |
-   |  both sides: ECDH -> HKDF-SHA256 -> same AES-256 session key
-   | -- AES-GCM ciphertext --> | -- relay ciphertext --> |  decrypt + verify
+```mermaid
+sequenceDiagram
+    participant A as Alice (client)
+    participant S as Server
+    participant B as Bob (client)
+
+    A->>S: ECDH public key
+    S->>B: relay public key
+    B->>S: ECDH public key
+    S->>A: relay public key
+
+    Note over A,B: Both sides derive the same AES-256 session key<br/>ECDH → HKDF-SHA256
+
+    A->>S: AES-GCM ciphertext
+    S->>B: relay ciphertext
+    Note right of B: decrypt + verify
+    Note over S: Server only sees public keys and ciphertext
 ```
 
 ## Getting Started
